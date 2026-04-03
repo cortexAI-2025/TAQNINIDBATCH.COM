@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <!-- ══ Accueil ══════════════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.taqnid.batch.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_homeFragment_to_batchDetailFragment"
+            app:destination="@id/batchDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_createBatchFragment"
+            app:destination="@id/createBatchFragment" />
+    </fragment>
+
+    <!-- ══ Liste des lots ══════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/batchListFragment"
+        android:name="com.taqnid.batch.ui.batch.BatchListFragment"
+        android:label="@string/title_batches"
+        tools:layout="@layout/fragment_batch_list">
+
+        <action
+            android:id="@+id/action_batchListFragment_to_batchDetailFragment"
+            app:destination="@id/batchDetailFragment" />
+        <action
+            android:id="@+id/action_batchListFragment_to_createBatchFragment"
+            app:destination="@id/createBatchFragment" />
+    </fragment>
+
+    <!-- ══ Détail d'un lot ════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/batchDetailFragment"
+        android:name="com.taqnid.batch.ui.batch.BatchDetailFragment"
+        android:label="@string/title_batch_detail"
+        tools:layout="@layout/fragment_batch_detail">
+
+        <argument
+            android:name="batchId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- ══ Création d'un lot ══════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/createBatchFragment"
+        android:name="com.taqnid.batch.ui.batch.CreateBatchFragment"
+        android:label="@string/title_create_batch"
+        tools:layout="@layout/fragment_create_batch" />
+
+    <!-- ══ Scanner QR ══════════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/scannerFragment"
+        android:name="com.taqnid.batch.ui.scanner.ScannerFragment"
+        android:label="@string/title_scanner"
+        tools:layout="@layout/fragment_scanner">
+
+        <action
+            android:id="@+id/action_scannerFragment_to_batchDetailFragment"
+            app:destination="@id/batchDetailFragment" />
+        <action
+            android:id="@+id/action_scannerFragment_to_transferDetailFragment"
+            app:destination="@id/transferDetailFragment" />
+    </fragment>
+
+    <!-- ══ Liste des transferts ══════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/transferListFragment"
+        android:name="com.taqnid.batch.ui.transfer.TransferListFragment"
+        android:label="@string/title_transfers"
+        tools:layout="@layout/fragment_transfer_list">
+
+        <action
+            android:id="@+id/action_transferListFragment_to_createTransferFragment"
+            app:destination="@id/createTransferFragment" />
+        <action
+            android:id="@+id/action_transferListFragment_to_transferDetailFragment"
+            app:destination="@id/transferDetailFragment" />
+    </fragment>
+
+    <!-- ══ Création de transfert ══════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/createTransferFragment"
+        android:name="com.taqnid.batch.ui.transfer.CreateTransferFragment"
+        android:label="@string/title_create_transfer"
+        tools:layout="@layout/fragment_create_transfer" />
+
+    <!-- ══ Détail d'un transfert ══════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/transferDetailFragment"
+        android:name="com.taqnid.batch.ui.transfer.TransferDetailFragment"
+        android:label="Détail du transfert"
+        tools:layout="@layout/fragment_transfer_detail">
+
+        <argument
+            android:name="transferId"
+            app:argType="string" />
+    </fragment>
+
+    <!-- ══ Rapports ══════════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/reportsFragment"
+        android:name="com.taqnid.batch.ui.reports.ReportsFragment"
+        android:label="@string/title_reports"
+        tools:layout="@layout/fragment_reports" />
+
+    <!-- ══ Profil ════════════════════════════════════════════════════════ -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.taqnid.batch.ui.profile.ProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/fragment_profile" />
+
+</navigation>

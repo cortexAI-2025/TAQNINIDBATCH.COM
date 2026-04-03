@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- En-tête transfert -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="8dp">
+                    <TextView android:id="@+id/tvTransferNumber" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="18sp" android:textStyle="bold" android:fontFamily="monospace" android:textColor="?attr/colorPrimary"/>
+                    <TextView android:id="@+id/tvStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="13sp" android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Infos expéditeur / destinataire -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Expéditeur" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvOrigin" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Destinataire" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                <TextView android:id="@+id/tvDestination" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Conducteur" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvDriver" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="13sp"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Véhicule" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvPlate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="13sp" android:fontFamily="monospace"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Créé le" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvCreatedAt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Expédié le" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvDispatchedAt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp"/>
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Reçu le" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+                        <TextView android:id="@+id/tvReceivedAt" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Notes" android:textSize="11sp" android:textColor="?attr/colorOnSurfaceVariant" android:layout_marginTop="8dp"/>
+                <TextView android:id="@+id/tvNotes" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="?attr/colorOnSurfaceVariant"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- QR de transport -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="12dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="QR de transport" android:textSize="14sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+                <ImageView android:id="@+id/ivQrCode" android:layout_width="180dp" android:layout_height="180dp" android:scaleType="fitCenter"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Liste des lots -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Lots du manifeste" android:textSize="15sp" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewItems"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Boutons actions -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReceive"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Réceptionner le transfert"
+            app:icon="@drawable/ic_check_circle"
+            android:layout_marginBottom="8dp"
+            app:cornerRadius="12dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnExportManifest"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Exporter le manifeste (PDF)"
+            app:icon="@drawable/ic_picture_as_pdf"
+            app:cornerRadius="12dp"/>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

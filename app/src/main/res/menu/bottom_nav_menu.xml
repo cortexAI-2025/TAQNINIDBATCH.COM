@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+
+    <item
+        android:id="@+id/batchListFragment"
+        android:icon="@drawable/ic_inventory"
+        android:title="@string/nav_batches" />
+
+    <item
+        android:id="@+id/scannerFragment"
+        android:icon="@drawable/ic_qr_scanner"
+        android:title="@string/nav_scanner" />
+
+    <item
+        android:id="@+id/transferListFragment"
+        android:icon="@drawable/ic_local_shipping"
+        android:title="@string/nav_transfers" />
+
+    <item
+        android:id="@+id/reportsFragment"
+        android:icon="@drawable/ic_bar_chart"
+        android:title="@string/nav_reports" />
+
+</menu>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Couleurs primaires Taqnin (vert réglementaire) -->
+    <color name="taqnin_green_dark">#1B5E20</color>
+    <color name="taqnin_green">#2E7D32</color>
+    <color name="taqnin_green_medium">#388E3C</color>
+    <color name="taqnin_green_light">#4CAF50</color>
+    <color name="taqnin_green_pale">#E8F5E9</color>
+
+    <!-- Accents -->
+    <color name="taqnin_amber">#FF6F00</color>
+    <color name="taqnin_amber_light">#FFB300</color>
+
+    <!-- Conformité -->
+    <color name="compliance_green">#4CAF50</color>
+    <color name="compliance_orange">#FF9800</color>
+    <color name="compliance_red">#F44336</color>
+    <color name="compliance_grey">#9E9E9E</color>
+
+    <!-- Statuts transfert -->
+    <color name="status_transit">#2196F3</color>
+    <color name="status_received">#4CAF50</color>
+    <color name="status_rejected">#F44336</color>
+
+    <!-- Surfaces -->
+    <color name="surface_light">#FFFFFF</color>
+    <color name="surface_dark">#121212</color>
+    <color name="card_background">#F5F5F5</color>
+    <color name="card_background_dark">#1E1E1E</color>
+
+    <!-- Texte -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_primary_dark">#FFFFFF</color>
+    <color name="text_secondary_dark">#B0B0B0</color>
+
+    <!-- Timeline -->
+    <color name="timeline_dot">#2E7D32</color>
+    <color name="timeline_line">#BDBDBD</color>
+
+    <!-- Material Design 3 -->
+    <color name="md_theme_light_primary">#2E7D32</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#A5D6A7</color>
+    <color name="md_theme_light_onPrimaryContainer">#003909</color>
+    <color name="md_theme_light_secondary">#FF6F00</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_background">#FAFAFA</color>
+    <color name="md_theme_light_onBackground">#212121</color>
+    <color name="md_theme_light_surface">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#212121</color>
+    <color name="md_theme_light_error">#B00020</color>
+    <color name="md_theme_light_onError">#FFFFFF</color>
+
+    <color name="md_theme_dark_primary">#81C784</color>
+    <color name="md_theme_dark_onPrimary">#003909</color>
+    <color name="md_theme_dark_primaryContainer">#1B5E20</color>
+    <color name="md_theme_dark_onPrimaryContainer">#A5D6A7</color>
+    <color name="md_theme_dark_secondary">#FFB300</color>
+    <color name="md_theme_dark_onSecondary">#3E2000</color>
+    <color name="md_theme_dark_background">#121212</color>
+    <color name="md_theme_dark_onBackground">#E0E0E0</color>
+    <color name="md_theme_dark_surface">#1E1E1E</color>
+    <color name="md_theme_dark_onSurface">#E0E0E0</color>
+    <color name="md_theme_dark_error">#CF6679</color>
+    <color name="md_theme_dark_onError">#370012</color>
+</resources>

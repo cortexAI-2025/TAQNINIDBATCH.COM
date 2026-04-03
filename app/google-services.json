@@ -1,0 +1,37 @@
+{
+  "_INSTRUCTIONS": "REMPLACEZ CE FICHIER par votre vrai google-services.json depuis la Firebase Console.",
+  "_STEPS": [
+    "1. Allez sur https://console.firebase.google.com",
+    "2. Créez un projet Firebase (ex: taqnin-id-batch)",
+    "3. Ajoutez une application Android avec packageName: com.taqnid.batch",
+    "4. Téléchargez le fichier google-services.json généré",
+    "5. Remplacez ce fichier par celui téléchargé"
+  ],
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "taqnin-id-batch",
+    "storage_bucket": "taqnin-id-batch.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.taqnid.batch"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REMPLACEZ_PAR_VOTRE_CLE_API"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

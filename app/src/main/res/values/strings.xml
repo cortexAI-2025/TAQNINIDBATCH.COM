@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Taqnin ID Batch</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Accueil</string>
+    <string name="nav_batches">Lots</string>
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_transfers">Transferts</string>
+    <string name="nav_reports">Rapports</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- Authentification -->
+    <string name="label_email">Adresse e-mail</string>
+    <string name="label_password">Mot de passe</string>
+    <string name="btn_login">Se connecter</string>
+    <string name="btn_biometric">Connexion par empreinte</string>
+    <string name="hint_email">exemple@domaine.com</string>
+    <string name="hint_password">••••••••</string>
+    <string name="title_login">Connexion</string>
+    <string name="subtitle_login">Taqnin ID Batch — Traçabilité réglementaire</string>
+
+    <!-- Lots -->
+    <string name="title_batches">Lots</string>
+    <string name="title_batch_detail">Détail du lot</string>
+    <string name="title_create_batch">Créer un lot</string>
+    <string name="label_taqnin_id">Taqnin ID</string>
+    <string name="label_variety">Variété</string>
+    <string name="label_type">Type</string>
+    <string name="label_stage">Stade</string>
+    <string name="label_quantity">Quantité</string>
+    <string name="label_unit">Unité</string>
+    <string name="label_location">Emplacement</string>
+    <string name="label_owner">Responsable</string>
+    <string name="label_license">Licence</string>
+    <string name="label_start_date">Date de début</string>
+    <string name="label_last_updated">Dernière mise à jour</string>
+    <string name="label_expiration">Date d\'expiration</string>
+    <string name="label_notes">Notes</string>
+    <string name="label_compliance">Conformité</string>
+    <string name="btn_create">Créer</string>
+    <string name="btn_change_stage">Changer le stade</string>
+    <string name="btn_record_action">Enregistrer une action</string>
+    <string name="btn_share_qr">Partager le QR</string>
+    <string name="text_empty_batches">Aucun lot trouvé.\nAppuyez sur + pour créer un lot.</string>
+
+    <!-- Scanner -->
+    <string name="title_scanner">Scanner</string>
+    <string name="hint_scan">Pointez la caméra vers un QR code Taqnin ID</string>
+    <string name="btn_flash">Lampe torche</string>
+
+    <!-- Transferts -->
+    <string name="title_transfers">Transferts</string>
+    <string name="title_create_transfer">Créer un transfert</string>
+    <string name="label_destination">Destinataire</string>
+    <string name="label_driver">Conducteur</string>
+    <string name="label_plate">Immatriculation</string>
+    <string name="label_batches_selected">Lots sélectionnés</string>
+    <string name="btn_add_batch">Ajouter un lot</string>
+    <string name="btn_create_transfer">Créer le manifeste</string>
+    <string name="text_empty_transfers">Aucun transfert enregistré.</string>
+
+    <!-- Rapports -->
+    <string name="title_reports">Rapports</string>
+    <string name="label_from_date">Période du</string>
+    <string name="label_to_date">au</string>
+    <string name="btn_export_batch_pdf">Rapport lots (PDF)</string>
+    <string name="btn_export_transfer_pdf">Rapport transferts (PDF)</string>
+    <string name="btn_export_batch_csv">Lots (CSV)</string>
+    <string name="btn_export_action_csv">Actions (CSV)</string>
+
+    <!-- Profil -->
+    <string name="title_profile">Mon profil</string>
+    <string name="label_biometric">Connexion biométrique</string>
+    <string name="btn_logout">Se déconnecter</string>
+
+    <!-- Accueil -->
+    <string name="title_home">Tableau de bord</string>
+    <string name="btn_quick_scan">Scanner rapide</string>
+    <string name="btn_create_batch_home">Nouveau lot</string>
+    <string name="btn_sync">Synchroniser</string>
+    <string name="label_recent_batches">Lots récemment modifiés</string>
+    <string name="label_alerts">Alertes actives</string>
+    <string name="text_no_alerts">Aucune alerte active</string>
+    <string name="text_no_recent">Aucun lot récent</string>
+
+    <!-- Général -->
+    <string name="action_cancel">Annuler</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_retry">Réessayer</string>
+    <string name="text_loading">Chargement…</string>
+    <string name="text_synced">Synchronisé</string>
+    <string name="text_not_synced">Non synchronisé</string>
+    <string name="error_generic">Une erreur est survenue</string>
+    <string name="text_loss_percent">Perte</string>
+    <string name="label_initial_quantity">Quantité initiale</string>
+    <string name="label_current_quantity">Quantité actuelle</string>
+    <string name="label_timeline">Historique des actions</string>
+</resources>
