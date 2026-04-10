@@ -18,12 +18,7 @@ android {
         versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Room schema export
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
-        }
+        // (room.schemaLocation est configuré dans le bloc kapt ci-dessous)
     }
 
     buildTypes {
@@ -48,11 +43,14 @@ android {
 
     buildFeatures {
         viewBinding true
-        dataBinding true
     }
 
     kapt {
         correctErrorTypes true
+        arguments {
+            // Room : export du schéma pour vérification des migrations
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 }
 

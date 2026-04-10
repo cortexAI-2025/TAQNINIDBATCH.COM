@@ -5,9 +5,11 @@ import android.view.*
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.MediatorLiveData
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.taqnid.batch.R
+import com.taqnid.batch.data.model.Batch
 import com.taqnid.batch.databinding.FragmentHomeBinding
 import com.taqnid.batch.ui.batch.BatchAdapter
 import com.taqnid.batch.ui.batch.BatchViewModel
@@ -100,13 +102,23 @@ class HomeFragment : Fragment() {
         }
 
         // Alertes : lots expirant dans 7 jours + stock bas
-        batchViewModel.expiringBatches.observe(viewLifecycleOwner) { expiring ->
-            batchViewModel.lowStockBatches.observe(viewLifecycleOwner) { lowStock ->
-                val alerts = (expiring + lowStock).distinctBy { it.id }
-                alertAdapter.submitList(alerts)
-                binding.tvAlertCount.text = "${alerts.size} alerte(s)"
-                binding.cardAlerts.visibility = if (alerts.isEmpty()) View.GONE else View.VISIBLE
+        // MediatorLiveData combines both sources without nesting observers.
+        val alertsLiveData = MediatorLiveData<List<Batch>>().apply {
+            var expiring: List<Batch> = emptyList()
+            var lowStock: List<Batch> = emptyList()
+            addSource(batchViewModel.expiringBatches) { newExpiring ->
+                expiring = newExpiring ?: emptyList()
+                value = (expiring + lowStock).distinctBy { it.id }
             }
+            addSource(batchViewModel.lowStockBatches) { newLowStock ->
+                lowStock = newLowStock ?: emptyList()
+                value = (expiring + lowStock).distinctBy { it.id }
+            }
+        }
+        alertsLiveData.observe(viewLifecycleOwner) { alerts ->
+            alertAdapter.submitList(alerts)
+            binding.tvAlertCount.text = "${alerts.size} alerte(s)"
+            binding.cardAlerts.visibility = if (alerts.isEmpty()) View.GONE else View.VISIBLE
         }
     }
 

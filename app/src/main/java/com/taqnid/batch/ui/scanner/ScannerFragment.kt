@@ -132,7 +132,7 @@ class ScannerFragment : Fragment() {
 
         scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
-                barcodes.firstOrNull { it.valueType == Barcode.TYPE_TEXT || it.rawValue != null }
+                barcodes.firstOrNull { it.rawValue != null }
                     ?.rawValue?.let { content ->
                         viewModel.processQrCode(content)
                     }

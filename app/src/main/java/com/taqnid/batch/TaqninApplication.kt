@@ -1,8 +1,6 @@
 package com.taqnid.batch
 
 import android.app.Application
-import android.content.IntentFilter
-import android.net.ConnectivityManager
 import com.taqnid.batch.worker.SyncWorker
 
 /**

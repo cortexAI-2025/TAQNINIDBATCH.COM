@@ -19,7 +19,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 
-    // Destinations où la BottomNav doit être affichée
+    // Destinations où la BottomNav est visible (correspond aux items du menu).
+    // homeFragment est la startDestination — BottomNav affichée mais sans item actif.
+    // scannerFragment masque volontairement la BottomNav (plein écran caméra).
     private val topLevelDestinations = setOf(
         R.id.homeFragment,
         R.id.batchListFragment,
