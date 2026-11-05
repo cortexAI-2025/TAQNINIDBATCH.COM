@@ -2,6 +2,9 @@
  * seed-test-users.js
  * Crée les 4 comptes utilisateurs de test (un par rôle) dans Firebase Auth + Firestore.
  *
+ * ⚠ RECETTE OU ÉMULATEUR UNIQUEMENT. Ces comptes ont un mot de passe connu :
+ * ne jamais exécuter ce script avec la clé d'un projet de production.
+ *
  * Prérequis :
  *   npm install firebase-admin
  *
@@ -16,19 +19,25 @@ const admin = require("firebase-admin");
 const path = require("path");
 const fs = require("fs");
 
-// ── Vérification de la clé de service ────────────────────────────────────────
-const keyPath = path.join(__dirname, "serviceAccountKey.json");
-if (!fs.existsSync(keyPath)) {
-  console.error(
-    "\n❌  serviceAccountKey.json introuvable dans scripts/\n" +
-      "   → Console Firebase → Paramètres → Comptes de service → Générer une nouvelle clé privée\n"
-  );
-  process.exit(1);
+// ── Émulateur, ou clé de service d'un projet de RECETTE ──────────────────────
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+  admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "demo-taqnin" });
+} else {
+  const keyPath = path.join(__dirname, "serviceAccountKey.json");
+  if (!fs.existsSync(keyPath)) {
+    console.error(
+      "\n❌  serviceAccountKey.json introuvable dans scripts/\n" +
+        "   → Console Firebase → Paramètres → Comptes de service → Générer une nouvelle clé privée\n"
+    );
+    process.exit(1);
+  }
+  const key = require(keyPath);
+  if (!/recette|test|demo|staging/i.test(key.project_id || "")) {
+    console.error(`\n❌  Projet « ${key.project_id} » : ce script ne s'exécute que sur un projet de recette.\n`);
+    process.exit(1);
+  }
+  admin.initializeApp({ credential: admin.credential.cert(key) });
 }
-
-admin.initializeApp({
-  credential: admin.credential.cert(require(keyPath)),
-});
 
 const auth = admin.auth();
 const db = admin.firestore();

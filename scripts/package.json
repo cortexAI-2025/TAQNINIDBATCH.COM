@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Scripts d'administration Firebase pour Taqnin ID Batch",
   "scripts": {
-    "seed": "node seed-test-users.js"
+    "seed": "node seed-test-users.js",
+    "assign": "node assign-user.js"
   },
   "dependencies": {
     "firebase-admin": "^12.0.0"
