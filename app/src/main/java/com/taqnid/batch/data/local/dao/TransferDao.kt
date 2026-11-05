@@ -22,8 +22,26 @@ interface TransferDao {
     @Query("SELECT * FROM transfers WHERE originLicenseId = :licenseId OR destinationLicenseId = :licenseId ORDER BY createdAt DESC")
     fun observeByLicense(licenseId: String): Flow<List<TransferEntity>>
 
-    @Query("SELECT * FROM transfers WHERE isSynced = 0")
+    @Query("SELECT * FROM transfers WHERE isSynced = 0 AND syncState = 'PENDING'")
     suspend fun getUnsynced(): List<TransferEntity>
+
+    @Query("SELECT * FROM transfers WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransferEntity?
+
+    @Query("SELECT * FROM transfers WHERE transferNumber = :number LIMIT 1")
+    suspend fun getByNumber(number: String): TransferEntity?
+
+    @Query("SELECT COUNT(*) FROM transfers WHERE isSynced = 0")
+    suspend fun countUnsynced(): Int
+
+    @Query("SELECT COUNT(*) FROM transfers WHERE isSynced = 0")
+    fun observeUnsyncedCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM transfers WHERE syncState = 'REJECTED'")
+    fun observeRejectedCount(): Flow<Int>
+
+    @Upsert
+    suspend fun upsert(transfer: TransferEntity)
 
     @Query("""
         SELECT * FROM transfers
@@ -32,18 +50,19 @@ interface TransferDao {
     """)
     suspend fun getTransfersInPeriod(from: Long, to: Long): List<TransferEntity>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(transfer: TransferEntity)
 
     @Update
     suspend fun update(transfer: TransferEntity)
 
-    @Query("UPDATE transfers SET status = :status WHERE id = :id")
+    @Query("UPDATE transfers SET status = :status, isSynced = 0, syncState = 'PENDING' WHERE id = :id")
     suspend fun updateStatus(id: String, status: String)
 
-    @Query("UPDATE transfers SET isSynced = 1 WHERE id = :id")
-    suspend fun markSynced(id: String)
+    /** Marqué envoyé seulement si son statut n'a pas changé pendant l'envoi. */
+    @Query("UPDATE transfers SET isSynced = 1, syncState = 'SYNCED', syncMessage = NULL WHERE id = :id AND status = :status")
+    suspend fun markSyncedIfUnchanged(id: String, status: String): Int
 
-    @Delete
-    suspend fun delete(transfer: TransferEntity)
+    @Query("UPDATE transfers SET syncState = 'REJECTED', syncMessage = :message WHERE id = :id")
+    suspend fun markRejected(id: String, message: String)
 }

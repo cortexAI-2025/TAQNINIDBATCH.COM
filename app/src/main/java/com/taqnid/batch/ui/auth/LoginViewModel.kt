@@ -66,12 +66,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             val result = userRepository.login(email, password)
             _loginState.value = result.fold(
                 onSuccess = { LoginState.Success(it) },
-                onFailure = { LoginState.Error(mapFirebaseError(it.message)) }
+                onFailure = {
+                    LoginState.Error(
+                        if (it is com.taqnid.batch.repository.AccountNotReadyException) it.message ?: ""
+                        else mapFirebaseError(it.message)
+                    )
+                }
             )
         }
     }
-
-    fun logout() = userRepository.logout()
 
     private fun mapFirebaseError(message: String?): String {
         return when {

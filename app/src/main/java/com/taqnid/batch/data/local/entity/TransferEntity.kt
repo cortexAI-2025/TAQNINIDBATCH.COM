@@ -1,5 +1,6 @@
 package com.taqnid.batch.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -8,6 +9,7 @@ import com.google.gson.reflect.TypeToken
 import com.taqnid.batch.data.model.Transfer
 import com.taqnid.batch.data.model.TransferBatchItem
 import com.taqnid.batch.data.model.TransferStatus
+import com.taqnid.batch.data.model.SyncState
 
 /**
  * Entité Room représentant un manifeste de transfert.
@@ -41,7 +43,9 @@ data class TransferEntity(
     val receivedAt: Long?,
     val receivedBy: String,
     val notes: String,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    @ColumnInfo(defaultValue = "PENDING") val syncState: String = SyncState.PENDING.name,
+    val syncMessage: String? = null
 ) {
     fun toModel(): Transfer {
         val gson = Gson()
@@ -69,7 +73,9 @@ data class TransferEntity(
             receivedAt = receivedAt?.let { java.util.Date(it) },
             receivedBy = receivedBy,
             notes = notes,
-            isSynced = isSynced
+            isSynced = isSynced,
+            syncState = SyncState.valueOf(syncState),
+            syncMessage = syncMessage
         )
     }
 
@@ -96,7 +102,9 @@ data class TransferEntity(
                 receivedAt = transfer.receivedAt?.time,
                 receivedBy = transfer.receivedBy,
                 notes = transfer.notes,
-                isSynced = transfer.isSynced
+                isSynced = transfer.isSynced,
+                syncState = transfer.syncState.name,
+                syncMessage = transfer.syncMessage
             )
         }
     }

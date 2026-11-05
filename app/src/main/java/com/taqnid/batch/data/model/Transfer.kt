@@ -19,7 +19,7 @@ enum class TransferStatus(val labelFr: String) {
  */
 data class Transfer(
     val id: String = "",
-    val transferNumber: String = "",       // Ex: TRF-2024-0001
+    val transferNumber: String = "",       // Ex: TRF-2026-AB12CD34
     val status: TransferStatus = TransferStatus.BROUILLON,
     val originLicenseId: String = "",      // Licencié expéditeur
     val originLicenseName: String = "",
@@ -37,7 +37,9 @@ data class Transfer(
     val receivedAt: Date? = null,
     val receivedBy: String = "",
     val notes: String = "",
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    val syncState: SyncState = SyncState.PENDING,
+    val syncMessage: String? = null
 )
 
 /**

@@ -9,7 +9,7 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import com.taqnid.batch.data.model.BatchType
 import com.taqnid.batch.databinding.FragmentCreateBatchBinding
-import com.taqnid.batch.repository.UserRepository
+import com.taqnid.batch.domain.BatchRules
 
 /**
  * Fragment de création d'un nouveau lot.
@@ -20,7 +20,6 @@ class CreateBatchFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: BatchViewModel by activityViewModels()
-    private lateinit var userRepository: UserRepository
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -32,7 +31,6 @@ class CreateBatchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        userRepository = UserRepository(requireContext())
 
         setupTypeSpinner()
         setupSubmit()
@@ -47,32 +45,24 @@ class CreateBatchFragment : Fragment() {
     }
 
     private fun setupSubmit() {
+        viewModel.busy.observe(viewLifecycleOwner) { busy -> binding.btnCreate.isEnabled = !busy }
         binding.btnCreate.setOnClickListener {
             if (!validate()) return@setOnClickListener
 
-            val currentUser = userRepository.getCachedUser()
-            val variety = binding.etVariety.text.toString().trim()
             val typeLabel = binding.actvType.text.toString()
             val type = BatchType.values().firstOrNull { it.labelFr == typeLabel } ?: BatchType.GRAINE
-            val qty = binding.etInitialQuantity.text.toString().toDoubleOrNull() ?: 0.0
-            val unit = binding.etUnit.text.toString().trim().ifBlank { "g" }
-            val locationName = binding.etLocation.text.toString().trim()
-            val notes = binding.etNotes.text.toString().trim()
-
             viewModel.createBatch(
-                variety = variety,
+                variety = binding.etVariety.text.toString().trim(),
                 type = type,
-                initialQuantity = qty,
-                unit = unit,
-                locationId = "",           // À relier à un LocationDao en production
-                locationName = locationName,
-                ownerId = currentUser?.uid ?: "",
-                ownerName = currentUser?.displayName ?: "Inconnu",
-                licenseNumber = currentUser?.licenseId ?: "",
-                notes = notes
+                initialQuantity = quantity(),
+                unit = binding.etUnit.text.toString().trim(),
+                locationName = binding.etLocation.text.toString().trim(),
+                notes = binding.etNotes.text.toString().trim()
             )
         }
     }
+
+    private fun quantity() = binding.etInitialQuantity.text.toString().replace(',', '.').trim().toDoubleOrNull()
 
     private fun validate(): Boolean {
         var valid = true
@@ -81,11 +71,17 @@ class CreateBatchFragment : Fragment() {
             valid = false
         } else binding.tilVariety.error = null
 
-        val qty = binding.etInitialQuantity.text.toString().toDoubleOrNull()
-        if (qty == null || qty <= 0) {
-            binding.tilInitialQuantity.error = "Quantité invalide"
+        val qtyCheck = BatchRules.checkInitialQuantity(quantity())
+        if (qtyCheck is BatchRules.Check.Refused) {
+            binding.tilInitialQuantity.error = qtyCheck.message
             valid = false
         } else binding.tilInitialQuantity.error = null
+
+        val unitCheck = BatchRules.checkUnit(binding.etUnit.text.toString().trim())
+        if (unitCheck is BatchRules.Check.Refused) {
+            binding.tilUnit.error = unitCheck.message
+            valid = false
+        } else binding.tilUnit.error = null
 
         if (binding.etLocation.text.isNullOrBlank()) {
             binding.tilLocation.error = "L'emplacement est requis"
@@ -96,14 +92,15 @@ class CreateBatchFragment : Fragment() {
     }
 
     private fun observeResult() {
-        viewModel.operationResult.observe(viewLifecycleOwner) { result ->
+        viewModel.operationResult.observe(viewLifecycleOwner) { event ->
+            val result = event.take() ?: return@observe
             result.fold(
                 onSuccess = { msg ->
                     Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT).show()
                     findNavController().navigateUp()
                 },
                 onFailure = { err ->
-                    Snackbar.make(binding.root, "Erreur : ${err.message}", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, err.message ?: "Erreur", Snackbar.LENGTH_LONG).show()
                 }
             )
         }

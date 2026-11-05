@@ -1,5 +1,6 @@
 package com.taqnid.batch.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -7,6 +8,7 @@ import androidx.room.PrimaryKey
 import com.taqnid.batch.data.model.ActionType
 import com.taqnid.batch.data.model.BatchAction
 import com.taqnid.batch.data.model.BatchStage
+import com.taqnid.batch.data.model.SyncState
 
 /**
  * Entité Room représentant une action/événement sur un lot.
@@ -43,7 +45,10 @@ data class ActionEntity(
     val stageTo: String?,
     val description: String,
     val locationId: String,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    @ColumnInfo(defaultValue = "") val orgId: String = "",
+    @ColumnInfo(defaultValue = "PENDING") val syncState: String = SyncState.PENDING.name,
+    val syncMessage: String? = null
 ) {
     fun toModel() = BatchAction(
         id = id,
@@ -61,7 +66,10 @@ data class ActionEntity(
         stageTo = stageTo?.let { BatchStage.valueOf(it) },
         description = description,
         locationId = locationId,
-        isSynced = isSynced
+        orgId = orgId,
+        isSynced = isSynced,
+        syncState = SyncState.valueOf(syncState),
+        syncMessage = syncMessage
     )
 
     companion object {
@@ -81,7 +89,10 @@ data class ActionEntity(
             stageTo = action.stageTo?.name,
             description = action.description,
             locationId = action.locationId,
-            isSynced = action.isSynced
+            isSynced = action.isSynced,
+            orgId = action.orgId,
+            syncState = action.syncState.name,
+            syncMessage = action.syncMessage
         )
     }
 }

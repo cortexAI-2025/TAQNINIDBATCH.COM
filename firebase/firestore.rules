@@ -131,7 +131,8 @@ service cloud.firestore {
         && request.resource.data.version == 1
         && request.resource.data.complianceStatus == 'EN_ATTENTE'
         && quantity(request.resource.data.initialQuantity)
-        && request.resource.data.currentQuantity == request.resource.data.initialQuantity
+        // Pesé hors ligne avant son premier envoi : la quantité courante peut déjà différer
+        && quantity(request.resource.data.currentQuantity)
         && unit(request.resource.data.unit)
         && stage(request.resource.data.currentStage)
         && text(request.resource.data.variety, 120)

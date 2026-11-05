@@ -1,5 +1,6 @@
 package com.taqnid.batch.ui.transfer
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.os.Bundle
 import android.view.*
 import androidx.fragment.app.Fragment
@@ -54,36 +55,45 @@ class CreateTransferFragment : Fragment() {
             binding.tvBatchCount.text = "${batches.size} lot(s) sélectionné(s)"
         }
 
-        // Bouton pour ajouter un lot depuis la liste
+        // Choisir parmi les lots transférables de l'organisation (actifs, non vides)
         binding.btnAddBatch.setOnClickListener {
-            // TODO: Ouvrir un dialogue de sélection de lot
-            // Pour simplifier, on utilise le lot scanné en mémoire
-            batchViewModel.scannedBatch.value?.let { batch ->
-                transferViewModel.addBatchToTransfer(batch)
-            } ?: Snackbar.make(
-                binding.root,
-                "Scannez d'abord un lot dans l'onglet Scanner",
-                Snackbar.LENGTH_SHORT
-            ).show()
+            val available = batchViewModel.transferableBatches.value.orEmpty()
+                .filter { b -> transferViewModel.selectedBatches.value.orEmpty().none { it.id == b.id } }
+            if (available.isEmpty()) {
+                Snackbar.make(binding.root, "Aucun autre lot transférable", Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Ajouter un lot")
+                .setItems(available.map { "${it.taqninId} — ${it.variety} (${it.currentQuantity} ${it.unit})" }.toTypedArray()) { _, i ->
+                    transferViewModel.addBatchToTransfer(available[i])
+                }
+                .setNegativeButton("Annuler", null)
+                .show()
         }
+        // Un lot scanné juste avant est proposé d'office
+        batchViewModel.scannedBatch.value?.let { transferViewModel.addBatchToTransfer(it) }
+        batchViewModel.transferableBatches.observe(viewLifecycleOwner) { }
     }
 
     private fun setupSubmit() {
+        transferViewModel.busy.observe(viewLifecycleOwner) { busy -> binding.btnCreateTransfer.isEnabled = !busy }
         binding.btnCreateTransfer.setOnClickListener {
             if (!validate()) return@setOnClickListener
-
-            val currentUser = userRepository.getCachedUser()
-            transferViewModel.createTransfer(
-                originLicenseId = currentUser?.licenseId ?: "",
-                originLicenseName = currentUser?.licenseName ?: "",
-                destinationLicenseId = binding.etDestinationLicense.text.toString().trim(),
-                destinationLicenseName = binding.etDestinationName.text.toString().trim(),
-                driverName = binding.etDriverName.text.toString().trim(),
-                vehiclePlate = binding.etVehiclePlate.text.toString().trim(),
-                createdBy = currentUser?.uid ?: "",
-                createdByName = currentUser?.displayName ?: "Inconnu",
-                notes = binding.etNotes.text.toString().trim()
-            )
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Expédier")
+                .setMessage("Les lots sélectionnés sortiront de votre stock. Confirmer l'expédition ?")
+                .setNegativeButton("Annuler", null)
+                .setPositiveButton("Expédier") { _, _ ->
+                    transferViewModel.createTransfer(
+                        destinationLicenseId = binding.etDestinationLicense.text.toString().trim(),
+                        destinationLicenseName = binding.etDestinationName.text.toString().trim(),
+                        driverName = binding.etDriverName.text.toString().trim(),
+                        vehiclePlate = binding.etVehiclePlate.text.toString().trim(),
+                        notes = binding.etNotes.text.toString().trim()
+                    )
+                }
+                .show()
         }
     }
 
@@ -93,6 +103,11 @@ class CreateTransferFragment : Fragment() {
             binding.tilDestinationName.error = "Destinataire requis"
             valid = false
         } else binding.tilDestinationName.error = null
+
+        if (binding.etDestinationLicense.text.isNullOrBlank()) {
+            binding.tilDestinationLicense.error = "Licence du destinataire requise"
+            valid = false
+        } else binding.tilDestinationLicense.error = null
 
         if (binding.etDriverName.text.isNullOrBlank()) {
             binding.tilDriverName.error = "Conducteur requis"
@@ -107,14 +122,15 @@ class CreateTransferFragment : Fragment() {
     }
 
     private fun observeResults() {
-        transferViewModel.operationResult.observe(viewLifecycleOwner) { result ->
+        transferViewModel.operationResult.observe(viewLifecycleOwner) { event ->
+            val result = event.take() ?: return@observe
             result.fold(
                 onSuccess = { msg ->
                     Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT).show()
                     findNavController().navigateUp()
                 },
                 onFailure = { err ->
-                    Snackbar.make(binding.root, "Erreur : ${err.message}", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(binding.root, err.message ?: "Erreur", Snackbar.LENGTH_LONG).show()
                 }
             )
         }

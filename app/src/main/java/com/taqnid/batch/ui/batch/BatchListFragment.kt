@@ -67,6 +67,9 @@ class BatchListFragment : Fragment() {
     }
 
     private fun setupFab() {
+        // Création réservée aux managers ; les règles serveur refusent aussi les autres
+        binding.fabCreateBatch.visibility =
+            if (viewModel.currentUser?.canCreate() == true) View.VISIBLE else View.GONE
         binding.fabCreateBatch.setOnClickListener {
             findNavController().navigate(R.id.action_batchListFragment_to_createBatchFragment)
         }

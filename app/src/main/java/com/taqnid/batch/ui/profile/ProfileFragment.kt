@@ -1,5 +1,10 @@
 package com.taqnid.batch.ui.profile
 
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.taqnid.batch.R
+import com.taqnid.batch.data.local.AppDatabase
+import kotlinx.coroutines.launch
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -71,11 +76,30 @@ class ProfileFragment : Fragment() {
 
     private fun setupLogout() {
         binding.btnLogout.setOnClickListener {
-            userRepository.logout()
-            startActivity(Intent(requireContext(), LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
+            viewLifecycleOwner.lifecycleScope.launch {
+                // Se déconnecter efface l'appareil : prévenir s'il reste des saisies non envoyées
+                val pending = AppDatabase.getInstance(requireContext()).pendingCount()
+                if (pending == 0) {
+                    logout()
+                } else {
+                    MaterialAlertDialogBuilder(requireContext())
+                        .setTitle(R.string.logout_pending_title)
+                        .setMessage(getString(R.string.logout_pending_message, pending))
+                        .setNegativeButton(R.string.action_cancel, null)
+                        .setPositiveButton(R.string.logout_anyway) { _, _ ->
+                            viewLifecycleOwner.lifecycleScope.launch { logout() }
+                        }
+                        .show()
+                }
+            }
         }
+    }
+
+    private suspend fun logout() {
+        userRepository.logout()
+        startActivity(Intent(requireContext(), LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        })
     }
 
     override fun onDestroyView() {

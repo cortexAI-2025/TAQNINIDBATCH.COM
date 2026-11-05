@@ -286,6 +286,15 @@ describe("droits par rôle sur les lots", () => {
     await assertSucceeds(setDoc(doc(as("managerA"), "batches", "TAQ-2026-DDDDDDDDDD"), batchDoc("TAQ-2026-DDDDDDDDDD", "ORG-A", "managerA")));
   });
 
+  it("un lot pesé hors ligne avant son premier envoi est accepté", async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(as("managerA"), "batches", "TAQ-2026-FFFFFFFFFF"),
+        batchDoc("TAQ-2026-FFFFFFFFFF", "ORG-A", "managerA", { currentQuantity: 940 })
+      )
+    );
+  });
+
   it("un lot ne naît pas conforme : la conformité ne vient pas de l'application", async () => {
     await assertFails(
       setDoc(

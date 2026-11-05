@@ -177,7 +177,7 @@ class ScannerFragment : Fragment() {
                     binding.scanOverlay.setStatus(ScanOverlayView.Status.ERROR)
                     Snackbar.make(
                         binding.root,
-                        "QR code non reconnu : ${result.rawContent.take(30)}",
+                        "Code non reconnu : ${result.rawContent}",
                         Snackbar.LENGTH_SHORT
                     ).setAction("Réessayer") { viewModel.resetScan() }.show()
                     viewModel.resetScan()

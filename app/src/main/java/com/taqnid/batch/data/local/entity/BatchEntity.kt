@@ -1,5 +1,6 @@
 package com.taqnid.batch.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -36,7 +37,13 @@ data class BatchEntity(
     val lastUpdated: Long,
     val expirationDate: Long?,
     val notes: String,
-    val isSynced: Boolean = false
+    val isSynced: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val version: Long = 0,
+    @ColumnInfo(defaultValue = "PENDING") val syncState: String = SyncState.PENDING.name,
+    val syncMessage: String? = null,
+    @ColumnInfo(defaultValue = "") val createdBy: String = "",
+    @ColumnInfo(defaultValue = "") val updatedBy: String = "",
+    val parentTaqninId: String? = null
 ) {
     fun toModel() = com.taqnid.batch.data.model.Batch(
         id = id,
@@ -57,7 +64,13 @@ data class BatchEntity(
         lastUpdated = java.util.Date(lastUpdated),
         expirationDate = expirationDate?.let { java.util.Date(it) },
         notes = notes,
-        isSynced = isSynced
+        isSynced = isSynced,
+        version = version,
+        syncState = SyncState.valueOf(syncState),
+        syncMessage = syncMessage,
+        createdBy = createdBy,
+        updatedBy = updatedBy,
+        parentTaqninId = parentTaqninId
     )
 
     companion object {
@@ -80,7 +93,13 @@ data class BatchEntity(
             lastUpdated = batch.lastUpdated.time,
             expirationDate = batch.expirationDate?.time,
             notes = batch.notes,
-            isSynced = batch.isSynced
+            isSynced = batch.isSynced,
+            version = batch.version,
+            syncState = batch.syncState.name,
+            syncMessage = batch.syncMessage,
+            createdBy = batch.createdBy,
+            updatedBy = batch.updatedBy,
+            parentTaqninId = batch.parentTaqninId
         )
     }
 }

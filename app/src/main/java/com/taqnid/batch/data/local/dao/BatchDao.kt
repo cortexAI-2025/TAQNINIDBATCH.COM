@@ -30,8 +30,21 @@ interface BatchDao {
     @Query("SELECT * FROM batches WHERE ownerId = :ownerId ORDER BY lastUpdated DESC")
     fun observeByOwner(ownerId: String): Flow<List<BatchEntity>>
 
-    @Query("SELECT * FROM batches WHERE isSynced = 0")
+    @Query("SELECT * FROM batches WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): BatchEntity?
+
+    /** Lots à envoyer : modifiés localement, ni en conflit ni refusés. */
+    @Query("SELECT * FROM batches WHERE isSynced = 0 AND syncState = 'PENDING'")
     suspend fun getUnsynced(): List<BatchEntity>
+
+    @Query("SELECT COUNT(*) FROM batches WHERE isSynced = 0")
+    suspend fun countUnsynced(): Int
+
+    @Query("SELECT COUNT(*) FROM batches WHERE isSynced = 0")
+    fun observeUnsyncedCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM batches WHERE syncState IN ('CONFLICT','REJECTED')")
+    fun observeProblemCount(): Flow<Int>
 
     @Query("SELECT * FROM batches ORDER BY lastUpdated DESC LIMIT :limit")
     fun observeRecent(limit: Int = 10): Flow<List<BatchEntity>>
@@ -47,6 +60,9 @@ interface BatchDao {
 
     @Query("SELECT SUM(currentQuantity) FROM batches WHERE locationId = :locationId")
     suspend fun getTotalQuantityInLocation(locationId: String): Double?
+
+    @Query("SELECT * FROM batches WHERE currentStage NOT IN ('VENTE','DETRUIT','RETIRE') AND currentQuantity > 0 ORDER BY lastUpdated DESC")
+    fun observeTransferable(): Flow<List<BatchEntity>>
 
     @Query("SELECT COUNT(*) FROM batches WHERE currentStage NOT IN ('VENTE','DETRUIT','RETIRE')")
     fun observeActiveBatchCount(): Flow<Int>
@@ -85,24 +101,54 @@ interface BatchDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(batches: List<BatchEntity>)
 
+    /**
+     * Mise à jour ou insertion SANS suppression préalable : REPLACE supprime
+     * la ligne avant de la réinsérer, ce qui efface en cascade le journal
+     * d'actions du lot.
+     */
+    @Upsert
+    suspend fun upsert(batch: BatchEntity)
+
     @Update
     suspend fun update(batch: BatchEntity)
 
-    @Query("UPDATE batches SET isSynced = 1 WHERE id = :id")
-    suspend fun markSynced(id: String)
+    /**
+     * Marque le lot synchronisé à la version serveur donnée, seulement s'il
+     * n'a pas été modifié depuis sa lecture : une saisie faite pendant
+     * l'envoi reste en attente au lieu d'être perdue.
+     * @return 1 si le lot a été marqué, 0 s'il a changé entre-temps
+     */
+    @Query("""
+        UPDATE batches SET isSynced = 1, syncState = 'SYNCED', syncMessage = NULL, version = :version
+        WHERE id = :id AND lastUpdated = :lastUpdated
+    """)
+    suspend fun markSyncedIfUnchanged(id: String, lastUpdated: Long, version: Long): Int
 
-    @Query("UPDATE batches SET currentQuantity = :qty, lastUpdated = :ts WHERE id = :id")
-    suspend fun updateQuantity(id: String, qty: Double, ts: Long = System.currentTimeMillis())
+    /** Une saisie faite pendant l'envoi : garder la nouvelle version serveur comme base. */
+    @Query("UPDATE batches SET version = :version WHERE id = :id")
+    suspend fun setBaseVersion(id: String, version: Long)
 
-    @Query("UPDATE batches SET currentStage = :stage, lastUpdated = :ts WHERE id = :id")
-    suspend fun updateStage(id: String, stage: String, ts: Long = System.currentTimeMillis())
+    @Query("UPDATE batches SET syncState = 'CONFLICT', syncMessage = :message WHERE id = :id")
+    suspend fun markConflict(id: String, message: String)
 
-    @Query("UPDATE batches SET ownerId = :ownerId, ownerName = :ownerName, licenseNumber = :license, lastUpdated = :ts WHERE id = :id")
-    suspend fun updateOwner(id: String, ownerId: String, ownerName: String, license: String, ts: Long = System.currentTimeMillis())
+    @Query("UPDATE batches SET syncState = 'REJECTED', syncMessage = :message WHERE id = :id")
+    suspend fun markRejected(id: String, message: String)
 
-    @Delete
-    suspend fun delete(batch: BatchEntity)
+    /** Après un conflit, l'utilisateur garde sa saisie : elle repart de la version serveur. */
+    @Query("UPDATE batches SET version = :serverVersion, syncState = 'PENDING', syncMessage = NULL, isSynced = 0 WHERE id = :id")
+    suspend fun rebaseOnServer(id: String, serverVersion: Long)
 
-    @Query("DELETE FROM batches WHERE id = :id")
-    suspend fun deleteById(id: String)
+    @Query("""
+        UPDATE batches SET currentQuantity = :qty, lastUpdated = :ts, updatedBy = :by,
+            isSynced = 0, syncState = 'PENDING', syncMessage = NULL
+        WHERE id = :id
+    """)
+    suspend fun updateQuantity(id: String, qty: Double, ts: Long, by: String)
+
+    @Query("""
+        UPDATE batches SET currentStage = :stage, lastUpdated = :ts, updatedBy = :by,
+            isSynced = 0, syncState = 'PENDING', syncMessage = NULL
+        WHERE id = :id
+    """)
+    suspend fun updateStage(id: String, stage: String, ts: Long, by: String)
 }

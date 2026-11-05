@@ -25,18 +25,18 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Si déjà connecté, naviguer directement vers MainActivity
+        // Le formulaire est toujours prêt : un échec biométrique y revient
+        setupObservers()
+        setupClickListeners()
+
+        // Si déjà connecté (compte actif), naviguer directement vers MainActivity
         if (viewModel.isAlreadyLoggedIn()) {
             if (viewModel.isBiometricEnabled()) {
                 showBiometricPrompt()
             } else {
                 navigateToMain()
             }
-            return
         }
-
-        setupObservers()
-        setupClickListeners()
     }
 
     private fun setupObservers() {

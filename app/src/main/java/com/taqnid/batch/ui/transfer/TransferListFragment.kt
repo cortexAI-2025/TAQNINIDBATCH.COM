@@ -45,6 +45,8 @@ class TransferListFragment : Fragment() {
             adapter = this@TransferListFragment.adapter
         }
 
+        binding.fabCreateTransfer.visibility =
+            if (viewModel.currentUser?.canTransfer() == true) View.VISIBLE else View.GONE
         binding.fabCreateTransfer.setOnClickListener {
             findNavController().navigate(R.id.action_transferListFragment_to_createTransferFragment)
         }
