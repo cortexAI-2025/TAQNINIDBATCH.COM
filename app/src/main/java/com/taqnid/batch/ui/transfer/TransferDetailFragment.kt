@@ -1,5 +1,13 @@
 package com.taqnid.batch.ui.transfer
 
+import android.text.InputType
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.taqnid.batch.data.model.SyncState
+import com.taqnid.batch.data.model.Transfer
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -44,6 +52,8 @@ class TransferDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         userRepository = UserRepository(requireContext())
+        // Ouvert depuis la liste ou le scanner : l'argument fait foi
+        arguments?.getString("transferId")?.let { viewModel.selectTransfer(it) }
 
         setupItemsList()
         observeData()
@@ -80,16 +90,25 @@ class TransferDetailFragment : Fragment() {
                 val qrBitmap: Bitmap? = QRCodeGenerator.forTransfer(transfer.qrCodeContent, 350)
                 qrBitmap?.let { ivQrCode.setImageBitmap(it) }
 
-                // Bouton de réception : visible seulement si EN_TRANSIT
-                btnReceive.visibility = if (transfer.status == TransferStatus.EN_TRANSIT)
-                    View.VISIBLE else View.GONE
+                // Réception : seulement pour un manager de l'organisation destinataire
+                val user = viewModel.currentUser
+                val canReceive = transfer.status == TransferStatus.EN_TRANSIT &&
+                    user != null && user.canTransfer() && user.licenseId == transfer.destinationLicenseId
+                btnReceive.visibility = if (canReceive) View.VISIBLE else View.GONE
+                if (transfer.syncState != SyncState.SYNCED) {
+                    tvStatus.text = "${transfer.status.labelFr} — ${transfer.syncState.labelFr}" +
+                        (transfer.syncMessage?.let { " : $it" } ?: "")
+                }
             }
         }
 
-        viewModel.operationResult.observe(viewLifecycleOwner) { result ->
+        viewModel.busy.observe(viewLifecycleOwner) { busy -> binding.btnReceive.isEnabled = !busy }
+
+        viewModel.operationResult.observe(viewLifecycleOwner) { event ->
+            val result = event.take() ?: return@observe
             result.fold(
                 onSuccess = { msg -> Snackbar.make(binding.root, msg, Snackbar.LENGTH_SHORT).show() },
-                onFailure = { err -> Snackbar.make(binding.root, "Erreur : ${err.message}", Snackbar.LENGTH_LONG).show() }
+                onFailure = { err -> Snackbar.make(binding.root, err.message ?: "Erreur", Snackbar.LENGTH_LONG).show() }
             )
         }
     }
@@ -97,10 +116,7 @@ class TransferDetailFragment : Fragment() {
     private fun setupButtons() {
         binding.btnReceive.setOnClickListener {
             val transfer = viewModel.selectedTransfer.value ?: return@setOnClickListener
-            val user = userRepository.getCachedUser()
-            // Réception avec les quantités telles que déclarées (à personnaliser avec un dialogue)
-            val quantities = transfer.batchSummaries.associate { it.taqninId to it.quantity }
-            viewModel.receiveTransfer(transfer, user?.displayName ?: "Inconnu", quantities)
+            showReceptionDialog(transfer)
         }
 
         binding.btnExportManifest.setOnClickListener {
@@ -119,6 +135,44 @@ class TransferDetailFragment : Fragment() {
                 Snackbar.make(binding.root, "Erreur PDF : ${e.message}", Snackbar.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /**
+     * Réception : quantité constatée pour chaque lot (pré-remplie avec
+     * l'expédié, jamais plus), ou refus du chargement.
+     */
+    private fun showReceptionDialog(transfer: Transfer) {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 0)
+        }
+        val fields = transfer.batchSummaries.associate { item ->
+            val field = EditText(requireContext()).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                setText(item.quantity.toString())
+                hint = "${item.taqninId} (${item.unit})"
+            }
+            container.addView(TextView(requireContext()).apply { text = "${item.taqninId} — expédié ${item.quantity} ${item.unit}" })
+            container.addView(field)
+            item.taqninId to field
+        }
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Quantités reçues")
+            .setView(ScrollView(requireContext()).apply { addView(container) })
+            .setNeutralButton("Refuser le chargement") { _, _ ->
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Refuser le transfert ?")
+                    .setMessage("Rien n'entrera dans votre stock. L'expéditeur verra le refus.")
+                    .setNegativeButton("Annuler", null)
+                    .setPositiveButton("Refuser") { _, _ -> viewModel.rejectTransfer(transfer.id) }
+                    .show()
+            }
+            .setNegativeButton("Annuler", null)
+            .setPositiveButton("Réceptionner") { _, _ ->
+                val quantities = fields.mapValues { (_, f) -> f.text.toString().replace(',', '.').trim().toDoubleOrNull() ?: -1.0 }
+                viewModel.receiveTransfer(transfer.id, quantities)
+            }
+            .show()
     }
 
     override fun onDestroyView() {

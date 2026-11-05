@@ -20,8 +20,8 @@ import java.util.*
 class ReportsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
-    private val batchRepo = BatchRepository(db.batchDao(), db.actionDao())
-    private val transferRepo = TransferRepository(db.transferDao())
+    private val batchRepo = BatchRepository(db)
+    private val transferRepo = TransferRepository(db)
 
     private val _fromDate = MutableLiveData<Date>(
         Calendar.getInstance().apply { add(Calendar.MONTH, -1) }.time

@@ -36,12 +36,12 @@
     </style>
 
     <!-- Formes -->
-    <style name="ShapeAppearance.TaqninIDBatch.Medium" parent="ShapeAppearance.Material3.Medium">
+    <style name="ShapeAppearance.TaqninIDBatch.Medium" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>
     </style>
 
-    <style name="ShapeAppearance.TaqninIDBatch.Large" parent="ShapeAppearance.Material3.Large">
+    <style name="ShapeAppearance.TaqninIDBatch.Large" parent="ShapeAppearance.Material3.LargeComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
@@ -60,7 +60,7 @@
     </style>
 
     <!-- Badge de conformité -->
-    <style name="Widget.TaqninIDBatch.ComplianceBadge">
+    <style name="Widget.TaqninIDBatch.ComplianceBadge" parent="">
         <item name="android:paddingHorizontal">8dp</item>
         <item name="android:paddingVertical">4dp</item>
         <item name="android:textColor">@color/surface_light</item>

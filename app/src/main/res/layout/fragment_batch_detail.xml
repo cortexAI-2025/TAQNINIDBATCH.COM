@@ -72,8 +72,68 @@
                 </LinearLayout>
 
                 <!-- Grille des informations principales -->
-                <include layout="@layout/include_batch_info_grid" />
+                <include
+                    android:id="@+id/infoGrid"
+                    layout="@layout/include_batch_info_grid" />
 
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- État de synchronisation : en attente, conflit ou refus -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvSyncState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/tvSyncMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:id="@+id/layoutConflictActions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnKeepServer"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:text="@string/btn_keep_server" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnKeepLocal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/btn_keep_local" />
+
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

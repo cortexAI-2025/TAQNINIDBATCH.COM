@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.taqnid.batch.data.local.AppDatabase
 import com.taqnid.batch.data.model.Batch
 import com.taqnid.batch.data.model.Transfer
+import com.taqnid.batch.domain.QrPayload
 import com.taqnid.batch.repository.BatchRepository
 import com.taqnid.batch.repository.TransferRepository
-import com.taqnid.batch.utils.TaqninIdGenerator
 import kotlinx.coroutines.launch
 
 /**
@@ -26,13 +26,15 @@ sealed class ScanResult {
 }
 
 /**
- * ViewModel pour l'écran de scan QR.
+ * ViewModel de l'écran de scan. La recherche se fait dans la base locale :
+ * elle fonctionne sans réseau pour tout lot ou transfert déjà synchronisé
+ * sur l'appareil.
  */
 class ScannerViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getInstance(application)
-    private val batchRepo = BatchRepository(db.batchDao(), db.actionDao())
-    private val transferRepo = TransferRepository(db.transferDao())
+    private val batchRepo = BatchRepository(db)
+    private val transferRepo = TransferRepository(db)
 
     private val _scanResult = MutableLiveData<ScanResult>(ScanResult.Idle)
     val scanResult: LiveData<ScanResult> = _scanResult
@@ -41,44 +43,35 @@ class ScannerViewModel(application: Application) : AndroidViewModel(application)
     val isFlashOn: LiveData<Boolean> = _isFlashOn
 
     /**
-     * Traite le contenu brut d'un QR code scanné.
+     * Traite le contenu brut d'un code scanné.
      */
     fun processQrCode(rawContent: String) {
         if (_scanResult.value is ScanResult.Scanning) return // Évite les doublons
         _scanResult.value = ScanResult.Scanning
 
         viewModelScope.launch {
-            try {
-                when {
-                    // Taqnin ID simple (lot individuel)
-                    TaqninIdGenerator.isValid(rawContent) -> {
-                        val batch = batchRepo.getBatchByTaqninId(rawContent)
-                        _scanResult.value = if (batch != null) {
-                            ScanResult.BatchFound(batch)
-                        } else {
-                            ScanResult.Error("Lot introuvable : $rawContent")
+            _scanResult.value = try {
+                when (val payload = QrPayload.parse(rawContent)) {
+                    is QrPayload.BatchId -> {
+                        val batch = batchRepo.getBatchByTaqninId(payload.taqninId)
+                        when {
+                            batch != null -> ScanResult.BatchFound(batch)
+                            payload.official -> ScanResult.Error(
+                                "Lot ${payload.taqninId} de la plateforme web : absent de cet appareil. " +
+                                    "Synchronisez, ou vérifiez-le sur la plateforme."
+                            )
+                            else -> ScanResult.Error("Lot ${payload.taqninId} absent de cet appareil : synchronisez puis réessayez")
                         }
                     }
-
-                    // QR de manifeste de transfert (format : TRF:...)
-                    rawContent.startsWith("TRF:") -> {
-                        val transferNumber = rawContent.substringAfter("TRF:").substringBefore("|")
-                        // Recherche par numéro de transfert dans les transferts en transit
-                        val transfers = transferRepo.getUnsyncedTransfers()
-                        val transfer = transfers.firstOrNull { it.transferNumber == transferNumber }
-                        _scanResult.value = if (transfer != null) {
-                            ScanResult.TransferFound(transfer)
-                        } else {
-                            ScanResult.UnknownQR(rawContent)
-                        }
+                    is QrPayload.TransferManifest -> {
+                        val transfer = transferRepo.getByNumber(payload.transferNumber)
+                        transfer?.let { ScanResult.TransferFound(it) }
+                            ?: ScanResult.Error("Transfert ${payload.transferNumber} absent de cet appareil : synchronisez puis réessayez")
                     }
-
-                    else -> {
-                        _scanResult.value = ScanResult.UnknownQR(rawContent)
-                    }
+                    is QrPayload.Invalid -> ScanResult.UnknownQR(payload.reason)
                 }
             } catch (e: Exception) {
-                _scanResult.value = ScanResult.Error("Erreur de traitement : ${e.message}")
+                ScanResult.Error("Erreur de lecture : ${e.message}")
             }
         }
     }

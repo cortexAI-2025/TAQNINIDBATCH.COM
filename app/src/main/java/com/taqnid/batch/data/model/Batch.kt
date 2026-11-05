@@ -42,8 +42,19 @@ enum class BatchType(val labelFr: String) {
 }
 
 /**
+ * État de synchronisation d'un élément saisi sur l'appareil.
+ */
+enum class SyncState(val labelFr: String) {
+    PENDING("En attente d'envoi"),
+    SYNCED("Synchronisé"),
+    CONFLICT("Conflit à résoudre"),
+    REJECTED("Refusé par le serveur")
+}
+
+/**
  * Modèle métier principal représentant un lot de traçabilité.
- * Identifié par un Taqnin ID unique au format TAQ-XXXX-YYYY.
+ * Identifié par un Taqnin ID provisoire (TAQ-AAAA-XXXXXXXXXX) ou officiel (MA-…),
+ * voir TaqninIdGenerator.
  */
 data class Batch(
     val id: String = "",
@@ -64,5 +75,11 @@ data class Batch(
     val lastUpdated: Date = Date(),
     val expirationDate: Date? = null,   // Pour les produits transformés
     val notes: String = "",
-    val isSynced: Boolean = false       // État de synchronisation Firebase
+    val isSynced: Boolean = false,      // Plus rien à envoyer
+    val version: Long = 0,              // Version serveur sur laquelle reposent les saisies locales
+    val syncState: SyncState = SyncState.PENDING,
+    val syncMessage: String? = null,    // Raison d'un conflit ou d'un refus
+    val createdBy: String = "",         // UID du créateur
+    val updatedBy: String = "",         // UID du dernier auteur d'une modification
+    val parentTaqninId: String? = null  // Lot d'origine (lot reçu par transfert)
 )

@@ -1,0 +1,227 @@
+rules_version = '2';
+
+// Règles Firestore de Taqnin ID Batch Android — privilèges minimaux.
+//
+// Principes :
+//  - Tout est refusé par défaut ; chaque collection ouvre ce dont l'application
+//    a besoin, et rien de plus.
+//  - Le rôle, l'organisation (licenseId) et l'état actif d'un compte sont lus
+//    dans /users/{uid}, que l'utilisateur ne peut pas modifier lui-même sur ces
+//    champs. Le rattachement à une organisation et le rôle ADMIN ne sont
+//    attribués que par un outil d'administration (SDK Admin), jamais par
+//    l'application.
+//  - Chaque organisation ne voit que ses propres lots, actions, emplacements,
+//    et les transferts dont elle est l'expéditeur ou le destinataire.
+//  - Les actions (journal de traçabilité) ne se créent qu'une fois, au nom de
+//    leur auteur, et ne se modifient ni ne s'effacent jamais. Rejouer une
+//    écriture identique (synchronisation interrompue) est accepté.
+//  - Un lot porte un numéro de version : une mise à jour doit partir de la
+//    dernière version connue, sinon elle est refusée et l'application signale
+//    le conflit au lieu d'écraser la saisie d'un autre appareil.
+//  - Aucune suppression n'est permise depuis l'application.
+//
+// Ces règles ne sont pas déployées : elles sont testées sur l'émulateur
+// (firebase/test). Un déploiement relève d'une décision explicite.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Profil de l'appelant ────────────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+    function me() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function hasProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    // Compte actif, rattaché à une organisation
+    function active() {
+      return hasProfile() && me().isActive == true && me().licenseId is string && me().licenseId != '';
+    }
+    function level() {
+      return me().role == 'ADMIN' ? 3
+           : me().role == 'MANAGER' ? 2
+           : me().role == 'OUVRIER' ? 1
+           : 0;
+    }
+    function atLeast(minimum) {
+      return active() && level() >= minimum;
+    }
+    function myOrg() {
+      return me().licenseId;
+    }
+    function inMyOrg(org) {
+      return active() && org == myOrg();
+    }
+
+    // ── Aides de validation ─────────────────────────────────────────────────
+    function unchanged(keys) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(keys);
+    }
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+    // Rejouer la même écriture ne change rien
+    function identicalReplay() {
+      return request.resource.data.diff(resource.data).affectedKeys().size() == 0;
+    }
+    function quantity(value) {
+      return value is number && value >= 0 && value < 1000000000;
+    }
+    function text(value, max) {
+      return value is string && value.size() <= max;
+    }
+    function stage(value) {
+      return value in ['GERMINATION', 'VEGETATION', 'FLORAISON', 'RECOLTE', 'SECHAGE', 'CURING',
+                       'TRANSFORMATION', 'EMBALLAGE', 'VENTE', 'DETRUIT', 'RETIRE'];
+    }
+    function unit(value) {
+      return value in ['g', 'kg', 'unités', 'plants', 'mL', 'L'];
+    }
+
+    // ── Utilisateurs ────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Chacun lit son profil ; un administrateur lit ceux de son organisation
+      allow read: if signedIn() && (request.auth.uid == uid
+                  || (atLeast(3) && resource.data.licenseId == myOrg()));
+
+      // Inscription : profil en attente, sans rôle ni organisation. Seul un
+      // administrateur (outil SDK Admin) rattache le compte et l'active.
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'licenseId',
+             'licenseName', 'isActive', 'biometricEnabled', 'createdAt', 'lastLoginAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'LECTEUR'
+        && request.resource.data.licenseId == ''
+        && request.resource.data.licenseName == ''
+        && request.resource.data.isActive == false
+        && text(request.resource.data.displayName, 100);
+
+      // Soi-même : préférences seulement, jamais rôle, organisation ni activation
+      allow update: if signedIn() && request.auth.uid == uid
+        && onlyChanges(['displayName', 'biometricEnabled', 'lastLoginAt'])
+        && text(request.resource.data.displayName, 100);
+
+      // Administrateur d'organisation : rôle (hors ADMIN) et activation des
+      // membres de son organisation, jamais sur son propre compte
+      allow update: if atLeast(3) && request.auth.uid != uid
+        && resource.data.licenseId == myOrg()
+        && onlyChanges(['role', 'isActive'])
+        && request.resource.data.role in ['LECTEUR', 'OUVRIER', 'MANAGER']
+        && resource.data.role != 'ADMIN'
+        && request.resource.data.isActive is bool;
+
+      allow delete: if false;
+    }
+
+    // ── Lots ────────────────────────────────────────────────────────────────
+    match /batches/{taqninId} {
+      allow read: if inMyOrg(resource.data.licenseNumber);
+
+      // Création par un manager de l'organisation, au statut d'attente :
+      // l'application ne déclare jamais elle-même un lot conforme
+      allow create: if atLeast(2)
+        && request.resource.data.taqninId == taqninId
+        && request.resource.data.licenseNumber == myOrg()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.version == 1
+        && request.resource.data.complianceStatus == 'EN_ATTENTE'
+        && quantity(request.resource.data.initialQuantity)
+        // Pesé hors ligne avant son premier envoi : la quantité courante peut déjà différer
+        && quantity(request.resource.data.currentQuantity)
+        && unit(request.resource.data.unit)
+        && stage(request.resource.data.currentStage)
+        && text(request.resource.data.variety, 120)
+        && text(request.resource.data.notes, 2000);
+
+      // Mise à jour depuis la dernière version : pesée (ouvrier), ou stade et
+      // emplacement (manager). Identité, organisation, quantité initiale et
+      // conformité ne changent pas.
+      allow update: if inMyOrg(resource.data.licenseNumber) && (
+        identicalReplay() || (
+          unchanged(['taqninId', 'id', 'licenseNumber', 'createdBy', 'initialQuantity',
+                     'complianceStatus', 'unit', 'type', 'startDate'])
+          && request.resource.data.version == resource.data.version + 1
+          && request.resource.data.updatedBy == request.auth.uid
+          && quantity(request.resource.data.currentQuantity)
+          && stage(request.resource.data.currentStage)
+          && (
+            (atLeast(1) && onlyChanges(['currentQuantity', 'lastUpdated', 'version', 'updatedBy']))
+            || (atLeast(2) && onlyChanges(['currentQuantity', 'currentStage', 'locationId', 'locationName',
+                                           'notes', 'expirationDate', 'lastUpdated', 'version', 'updatedBy']))
+          )
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    // ── Actions : journal de traçabilité, en ajout seulement ────────────────
+    match /actions/{actionId} {
+      allow read: if inMyOrg(resource.data.orgId);
+
+      allow create: if atLeast(1)
+        && request.resource.data.id == actionId
+        && request.resource.data.orgId == myOrg()
+        && request.resource.data.performedBy == request.auth.uid
+        // Le lot existe (ou est créé dans la même écriture) et appartient à l'organisation
+        && existsAfter(/databases/$(database)/documents/batches/$(request.resource.data.taqninId))
+        && getAfter(/databases/$(database)/documents/batches/$(request.resource.data.taqninId)).data.licenseNumber == myOrg()
+        && text(request.resource.data.description, 2000);
+
+      // Une écriture rejouée à l'identique est acceptée ; aucune autre modification
+      allow update: if inMyOrg(resource.data.orgId) && identicalReplay();
+      allow delete: if false;
+    }
+
+    // ── Transferts ──────────────────────────────────────────────────────────
+    match /transfers/{transferId} {
+      allow read: if active() && (resource.data.originLicenseId == myOrg()
+                              || resource.data.destinationLicenseId == myOrg());
+
+      // Expédition par un manager de l'organisation d'origine
+      allow create: if atLeast(2)
+        && request.resource.data.id == transferId
+        && request.resource.data.originLicenseId == myOrg()
+        && request.resource.data.destinationLicenseId is string
+        && request.resource.data.destinationLicenseId != ''
+        && request.resource.data.destinationLicenseId != myOrg()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'EN_TRANSIT'
+        && request.resource.data.batchIds is list
+        && request.resource.data.batchIds.size() > 0
+        && request.resource.data.batchIds.size() <= 50;
+
+      allow update: if active() && (
+        // Rejouée à l'identique
+        ((resource.data.originLicenseId == myOrg() || resource.data.destinationLicenseId == myOrg())
+          && identicalReplay())
+        // Réception ou refus par un manager du destinataire, une seule fois
+        || (atLeast(2) && resource.data.destinationLicenseId == myOrg()
+            && resource.data.status == 'EN_TRANSIT'
+            && request.resource.data.status in ['RECEPTIONNE', 'REJETE']
+            && request.resource.data.receivedBy == request.auth.uid
+            && onlyChanges(['status', 'receivedBy', 'receivedAt', 'batchSummaries']))
+        // Annulation par l'expéditeur tant que rien n'est reçu
+        || (atLeast(2) && resource.data.originLicenseId == myOrg()
+            && resource.data.status == 'EN_TRANSIT'
+            && request.resource.data.status == 'ANNULE'
+            && onlyChanges(['status']))
+      );
+
+      allow delete: if false;
+    }
+
+    // ── Emplacements ────────────────────────────────────────────────────────
+    match /locations/{locationId} {
+      allow read: if inMyOrg(resource.data.licenseId);
+      allow create: if atLeast(2) && request.resource.data.licenseId == myOrg();
+      allow update: if atLeast(2) && inMyOrg(resource.data.licenseId) && unchanged(['licenseId']);
+      allow delete: if false;
+    }
+  }
+}

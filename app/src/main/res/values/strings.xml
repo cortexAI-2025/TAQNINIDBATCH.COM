@@ -98,4 +98,22 @@
     <string name="label_initial_quantity">Quantité initiale</string>
     <string name="label_current_quantity">Quantité actuelle</string>
     <string name="label_timeline">Historique des actions</string>
+
+    <!-- Synchronisation et droits -->
+    <string name="btn_keep_server">Garder la version serveur</string>
+    <string name="btn_keep_local">Garder ma saisie</string>
+    <string name="sync_pending">En attente d\'envoi</string>
+    <string name="sync_conflict">Conflit : lot modifié sur un autre appareil</string>
+    <string name="sync_rejected">Refusé par le serveur</string>
+    <string name="status_online">En ligne</string>
+    <string name="status_offline">Hors ligne</string>
+    <string name="status_pending_count">%1$d en attente d\'envoi</string>
+    <string name="status_problem_count">%1$d à vérifier</string>
+    <string name="status_all_synced">Tout est synchronisé</string>
+    <string name="error_read_only">Votre rôle ne permet que la consultation</string>
+    <string name="error_account_pending">Compte en attente de rattachement à une organisation</string>
+    <string name="logout_pending_title">Saisies non envoyées</string>
+    <string name="logout_pending_message">%1$d saisie(s) ne sont pas encore envoyées. Se déconnecter les effacera de cet appareil. Connectez-vous au réseau et attendez la synchronisation avant de vous déconnecter.</string>
+    <string name="logout_anyway">Effacer et se déconnecter</string>
+    <string name="scan_web_batch_unknown">Lot de la plateforme web non présent sur cet appareil : synchronisez ou vérifiez-le sur la plateforme.</string>
 </resources>

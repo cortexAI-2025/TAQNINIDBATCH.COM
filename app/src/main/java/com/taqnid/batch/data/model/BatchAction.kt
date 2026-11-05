@@ -40,5 +40,8 @@ data class BatchAction(
     val stageTo: BatchStage? = null,     // Stade destination
     val description: String = "",
     val locationId: String = "",
-    val isSynced: Boolean = false
+    val orgId: String = "",              // Organisation propriétaire du lot (licence)
+    val isSynced: Boolean = false,
+    val syncState: SyncState = SyncState.PENDING,
+    val syncMessage: String? = null
 )
