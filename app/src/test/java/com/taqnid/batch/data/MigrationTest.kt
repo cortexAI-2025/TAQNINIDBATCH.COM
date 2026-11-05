@@ -13,12 +13,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Une base version 1 contenant des saisies déjà envoyées et d'autres en
  * attente passe en version 2 sans rien perdre, et Room valide le schéma
  * obtenu (une colonne manquante ou mal typée ferait échouer l'ouverture).
  */
+// Application neutre : celle de l'appli planifie WorkManager au démarrage
+@Config(application = android.app.Application::class, sdk = [34])
 @RunWith(RobolectricTestRunner::class)
 class MigrationTest {
 
@@ -59,7 +62,7 @@ class MigrationTest {
     }
 
     @Test
-    fun `migration 1 vers 2 sans perte, schéma validé par Room`() = runBlocking {
+    fun `migration 1 vers 2 sans perte, schéma validé par Room`() = runBlocking<Unit> {
         createVersion1()
         val db = Room.databaseBuilder(context, AppDatabase::class.java, name)
             .addMigrations(*AppDatabase.MIGRATIONS)

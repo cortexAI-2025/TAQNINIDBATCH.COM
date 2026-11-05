@@ -19,7 +19,10 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+// Application neutre : celle de l'appli planifie WorkManager au démarrage
+@Config(application = android.app.Application::class, sdk = [34])
 @RunWith(RobolectricTestRunner::class)
 class RepositoryTest {
 
@@ -62,7 +65,7 @@ class RepositoryTest {
         batches.createBatch(manager, "Beldiya", BatchType.GRAINE, qty, "g", "", "Serre 1")
 
     @Test
-    fun `creation - lot et action de creation ecrits ensemble, rattaches a l'organisation du compte`() = runBlocking {
+    fun `creation - lot et action de creation ecrits ensemble, rattaches a l'organisation du compte`() = runBlocking<Unit> {
         val batch = newBatch()
         val stored = db.batchDao().getById(batch.id)!!
         assertEquals("ORG-A", stored.licenseNumber)
@@ -75,7 +78,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `roles - lecteur et ouvrier ne creent pas de lot, lecteur n'enregistre rien`() = runBlocking {
+    fun `roles - lecteur et ouvrier ne creent pas de lot, lecteur n'enregistre rien`() = runBlocking<Unit> {
         refused { batches.createBatch(lecteur, "Beldiya", BatchType.GRAINE, 10.0, "g", "", "S") }
         refused { batches.createBatch(ouvrier, "Beldiya", BatchType.GRAINE, 10.0, "g", "", "S") }
         val batch = newBatch()
@@ -87,13 +90,13 @@ class RepositoryTest {
     }
 
     @Test
-    fun `compte inactif ou sans organisation - aucune saisie`() = runBlocking {
+    fun `compte inactif ou sans organisation - aucune saisie`() = runBlocking<Unit> {
         refused { batches.createBatch(user(UserRole.MANAGER, active = false), "B", BatchType.GRAINE, 1.0, "g", "", "S") }
         refused { batches.createBatch(user(UserRole.MANAGER, org = ""), "B", BatchType.GRAINE, 1.0, "g", "", "S") }
     }
 
     @Test
-    fun `quantites et unites controlees avant ecriture`() = runBlocking {
+    fun `quantites et unites controlees avant ecriture`() = runBlocking<Unit> {
         refused { batches.createBatch(manager, "B", BatchType.GRAINE, -5.0, "g", "", "S") }
         refused { batches.createBatch(manager, "B", BatchType.GRAINE, null, "g", "", "S") }
         refused { batches.createBatch(manager, "B", BatchType.GRAINE, 5.0, "tonnes", "", "S") }
@@ -107,7 +110,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `transitions de stade - en avant, rien apres destruction`() = runBlocking {
+    fun `transitions de stade - en avant, rien apres destruction`() = runBlocking<Unit> {
         val batch = newBatch()
         batches.changeStage(manager, batch.id, BatchStage.FLORAISON)
         refused { batches.changeStage(manager, batch.id, BatchStage.VEGETATION) }
@@ -117,7 +120,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `une pesee apres synchronisation remet le lot en attente d'envoi`() = runBlocking {
+    fun `une pesee apres synchronisation remet le lot en attente d'envoi`() = runBlocking<Unit> {
         val batch = newBatch()
         val stored = db.batchDao().getById(batch.id)!!
         assertEquals(1, db.batchDao().markSyncedIfUnchanged(batch.id, stored.lastUpdated, 1L))
@@ -129,7 +132,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `saisie pendant l'envoi - elle n'est pas marquee envoyee, rien n'est perdu`() = runBlocking {
+    fun `saisie pendant l'envoi - elle n'est pas marquee envoyee, rien n'est perdu`() = runBlocking<Unit> {
         val batch = newBatch()
         val readForSending = db.batchDao().getById(batch.id)!!
         Thread.sleep(2)
@@ -140,7 +143,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `donnees serveur - la mise a jour n'efface pas le journal local (pas de REPLACE en cascade)`() = runBlocking {
+    fun `donnees serveur - la mise a jour n'efface pas le journal local (pas de REPLACE en cascade)`() = runBlocking<Unit> {
         val batch = newBatch()
         batches.recordAction(ouvrier, batch.id, ActionType.PESEE, 950.0, "")
         val server = db.batchDao().getById(batch.id)!!.toModel().copy(currentQuantity = 940.0, version = 3)
@@ -150,7 +153,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `conflit - garder sa saisie la renvoie depuis la version serveur`() = runBlocking {
+    fun `conflit - garder sa saisie la renvoie depuis la version serveur`() = runBlocking<Unit> {
         val batch = newBatch()
         db.batchDao().markConflict(batch.id, "Modifié ailleurs")
         assertEquals(0, db.batchDao().getUnsynced().size)
@@ -162,7 +165,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `transfert - sortie de stock atomique, double soumission refusee`() = runBlocking {
+    fun `transfert - sortie de stock atomique, double soumission refusee`() = runBlocking<Unit> {
         val batch = newBatch(200.0)
         val transfer = transfers.createTransfer(manager, "ORG-B", "Coop B", listOf(batch.id), "Chauffeur", "1-A-1")
         assertEquals(0.0, db.batchDao().getById(batch.id)!!.currentQuantity, 0.0)
@@ -174,7 +177,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `transfert - pas vers soi-meme, pas les lots d'une autre organisation, pas par un ouvrier`() = runBlocking {
+    fun `transfert - pas vers soi-meme, pas les lots d'une autre organisation, pas par un ouvrier`() = runBlocking<Unit> {
         val batch = newBatch()
         refused { transfers.createTransfer(manager, "ORG-A", "Moi", listOf(batch.id), "C", "P") }
         refused { transfers.createTransfer(managerB, "ORG-C", "C", listOf(batch.id), "C", "P") }
@@ -183,7 +186,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `reception - par le destinataire seulement, une fois, jamais plus que l'expedie`() = runBlocking {
+    fun `reception - par le destinataire seulement, une fois, jamais plus que l'expedie`() = runBlocking<Unit> {
         val batch = newBatch(200.0)
         val transfer = transfers.createTransfer(manager, "ORG-B", "Coop B", listOf(batch.id), "Chauffeur", "1-A-1")
         refused { transfers.receiveTransfer(manager, transfer.id, emptyMap()) }
@@ -201,7 +204,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `deconnexion - effacer la base ne laisse rien au compte suivant`() = runBlocking {
+    fun `deconnexion - effacer la base ne laisse rien au compte suivant`() = runBlocking<Unit> {
         newBatch()
         assertTrue(db.pendingCount() > 0)
         db.clearAllTables()
@@ -210,7 +213,7 @@ class RepositoryTest {
     }
 
     @Test
-    fun `le journal ne remplace jamais une action existante`() = runBlocking {
+    fun `le journal ne remplace jamais une action existante`() = runBlocking<Unit> {
         val batch = newBatch()
         val action = db.actionDao().getActionsForBatch(batch.id).single()
         try {
