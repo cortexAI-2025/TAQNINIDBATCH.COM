@@ -30,7 +30,6 @@ import com.taqnid.batch.data.local.entity.*
     version = 2,
     exportSchema = true
 )
-@TypeConverters(AppDatabase.Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun batchDao(): BatchDao
@@ -56,11 +55,7 @@ abstract class AppDatabase : RoomDatabase() {
         transferDao().observeRejectedCount(),
     ) { a, b, c -> a + b + c }
 
-    // ── Convertisseurs de types ────────────────────────────────────────────────
-    class Converters {
-        // Room n'a pas besoin de convertisseurs supplémentaires pour ce projet
-        // car les dates sont stockées en Long et les enums en String.
-    }
+    // Pas de convertisseurs : dates en Long, énumérations en String.
 
     companion object {
         @Volatile
