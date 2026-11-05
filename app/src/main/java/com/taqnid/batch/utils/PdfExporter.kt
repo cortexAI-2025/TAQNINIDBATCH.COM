@@ -22,6 +22,8 @@ object PdfExporter {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.FRANCE)
     private val dateOnlyFormat = SimpleDateFormat("dd/MM/yyyy", Locale.FRANCE)
+    // Dans un nom de fichier, « / » ouvrirait un sous-dossier inexistant
+    private val fileDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.FRANCE)
 
     // Couleurs de la charte Taqnin
     private val colorPrimary = BaseColor(0x1B, 0x5E, 0x20)   // Vert foncé
@@ -38,7 +40,7 @@ object PdfExporter {
         fromDate: Date,
         toDate: Date
     ): File {
-        val fileName = "rapport_lots_${dateOnlyFormat.format(fromDate)}_${dateOnlyFormat.format(toDate)}.pdf"
+        val fileName = "rapport_lots_${fileDateFormat.format(fromDate)}_${fileDateFormat.format(toDate)}.pdf"
         val file = getOutputFile(context, fileName)
 
         val document = Document(PageSize.A4, 40f, 40f, 60f, 40f)
@@ -114,7 +116,7 @@ object PdfExporter {
         fromDate: Date,
         toDate: Date
     ): File {
-        val fileName = "rapport_transferts_${dateOnlyFormat.format(fromDate)}_${dateOnlyFormat.format(toDate)}.pdf"
+        val fileName = "rapport_transferts_${fileDateFormat.format(fromDate)}_${fileDateFormat.format(toDate)}.pdf"
         val file = getOutputFile(context, fileName)
 
         val document = Document(PageSize.A4.rotate(), 40f, 40f, 60f, 40f)
