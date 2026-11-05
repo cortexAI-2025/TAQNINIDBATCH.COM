@@ -1,0 +1,80 @@
+name: Android
+
+on:
+  push:
+    branches: ["claude/**", "main"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  firestore-rules:
+    name: Règles Firestore (émulateur)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firebase
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+      - run: npm ci
+      - name: Tests des règles sur l'émulateur Firestore
+        run: npm test
+
+  build:
+    name: Compilation, tests et APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      # Recette seulement : le fichier Firebase réel vient d'un secret. Sans
+      # lui, l'APK est construit avec le fichier factice du dépôt.
+      - name: Configuration Firebase de recette (facultative)
+        env:
+          GOOGLE_SERVICES_JSON_RECETTE: ${{ secrets.GOOGLE_SERVICES_JSON_RECETTE }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_RECETTE" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON_RECETTE" > app/google-services.json
+            echo "Configuration de recette utilisée"
+          else
+            echo "Aucune configuration de recette : APK de démonstration"
+          fi
+      - name: Compilation debug
+        run: ./gradlew --no-daemon assembleDebug
+      - name: Tests unitaires
+        run: ./gradlew --no-daemon testDebugUnitTest
+      - name: Analyse statique (lint)
+        run: ./gradlew --no-daemon lintDebug
+      - name: APK de bêta
+        uses: actions/upload-artifact@v4
+        with:
+          name: taqnin-id-batch-android-v1-beta
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Rapports de tests et de lint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapports-android
+          path: |
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: ignore

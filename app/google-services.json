@@ -1,5 +1,5 @@
 {
-  "_INSTRUCTIONS": "REMPLACEZ CE FICHIER par votre vrai google-services.json depuis la Firebase Console.",
+  "_INSTRUCTIONS": "Fichier factice, sans aucun secret : il permet de compiler un APK de démonstration. Pour un environnement de recette, la CI le remplace par le secret GOOGLE_SERVICES_JSON_RECETTE (jamais commité).",
   "_STEPS": [
     "1. Allez sur https://console.firebase.google.com",
     "2. Créez un projet Firebase (ex: taqnin-id-batch)",
@@ -18,6 +18,25 @@
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
           "package_name": "com.taqnid.batch"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REMPLACEZ_PAR_VOTRE_CLE_API"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000001",
+        "android_client_info": {
+          "package_name": "com.taqnid.batch.debug"
         }
       },
       "oauth_client": [],
